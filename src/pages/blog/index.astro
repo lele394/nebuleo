@@ -1,0 +1,192 @@
+---
+import { getCollection } from 'astro:content';
+import BaseHead from '../../components/BaseHead.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+
+const posts = (await getCollection('blog')).sort(
+	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Blog | ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+		<style>
+			.blog-shell {
+				display: grid;
+				gap: 1rem;
+			}
+			.filters {
+				display: flex;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			label {
+				font-size: 0.9rem;
+				color: var(--secondary-text);
+			}
+			#search {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				color: var(--text);
+				padding: 0.5rem 0.7rem;
+				min-width: 260px;
+			}
+			#active-tag {
+				border: 1px solid var(--border);
+				background: transparent;
+				color: var(--secondary-text);
+				padding: 0.45rem 0.7rem;
+				display: none;
+				cursor: pointer;
+			}
+			#active-tag.visible {
+				display: inline-block;
+			}
+			.posts-grid {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: 0.85rem;
+			}
+			.empty-state {
+				display: none;
+				padding: 1rem;
+				border: 1px dashed var(--border);
+				color: var(--secondary-text);
+			}
+			.empty-state.visible {
+				display: block;
+			}
+			@media (max-width: 640px) {
+				#search {
+					width: 100%;
+					min-width: unset;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<Header />
+		<main>
+			<section class="blog-shell">
+				<h1>Blog</h1>
+				<p>Notes on software, systems, and experiments.</p>
+				<div class="filters">
+					<label for="search">Search</label>
+					<input id="search" type="search" placeholder="Filter by title, description, or tag" />
+					<button id="active-tag" type="button" aria-live="polite"></button>
+				</div>
+				{
+					posts.length === 0 ? (
+						<p class="empty-state visible">No posts found in content collection.</p>
+					) : (
+						<div class="posts-grid" id="posts-grid">
+							{
+								posts.map((post) => (
+									<BlogCard
+										slug={post.id}
+										title={post.data.title}
+										description={post.data.description}
+										pubDate={post.data.pubDate}
+										tags={post.data.tags}
+									/>
+								))
+							}
+						</div>
+					)
+				}
+				<p class="empty-state" id="empty-state">No posts match the current search and tag filters.</p>
+			</section>
+		</main>
+		<Footer />
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const searchInput = document.querySelector('#search');
+				const activeTagButton = document.querySelector('#active-tag');
+				const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-post]'));
+				const emptyState = document.querySelector('#empty-state');
+				const initialTag = new URLSearchParams(window.location.search).get('tag')?.toLowerCase() ?? '';
+
+				if (cards.length === 0) return;
+
+				let activeTag = initialTag;
+
+				const applyFilters = () => {
+					const searchValue = (searchInput instanceof HTMLInputElement ? searchInput.value : '')
+						.trim()
+						.toLowerCase();
+					let visibleCount = 0;
+
+					cards.forEach((card) => {
+						const title = card.getAttribute('data-title')?.toLowerCase() ?? '';
+						const description = card.getAttribute('data-description')?.toLowerCase() ?? '';
+						const tags = card.getAttribute('data-tags')?.toLowerCase() ?? '';
+						const searchMatch = !searchValue || `${title} ${description} ${tags}`.includes(searchValue);
+						const tagMatch = !activeTag || tags.split(' ').includes(activeTag);
+						const isVisible = searchMatch && tagMatch;
+
+						card.style.display = isVisible ? '' : 'none';
+						if (isVisible) visibleCount += 1;
+					});
+
+					if (emptyState) {
+						emptyState.classList.toggle('visible', cards.length > 0 && visibleCount === 0);
+					}
+				};
+
+				const setActiveTag = (tag: string) => {
+					activeTag = activeTag === tag ? '' : tag;
+					if (activeTagButton instanceof HTMLButtonElement) {
+						if (activeTag) {
+							activeTagButton.classList.add('visible');
+							activeTagButton.textContent = `Tag: #${activeTag} ×`;
+						} else {
+							activeTagButton.classList.remove('visible');
+							activeTagButton.textContent = '';
+						}
+					}
+					applyFilters();
+				};
+
+				if (searchInput instanceof HTMLInputElement) {
+					searchInput.addEventListener('input', applyFilters);
+				}
+
+				if (activeTagButton instanceof HTMLButtonElement) {
+					activeTagButton.addEventListener('click', () => setActiveTag(''));
+				}
+
+				document.querySelectorAll('[data-tag-filter]').forEach((tagButton) => {
+					tagButton.addEventListener('click', () => {
+						const tag = tagButton.getAttribute('data-tag-filter');
+						if (tag) setActiveTag(tag);
+					});
+				});
+
+				cards.forEach((card) => {
+					card.addEventListener('click', (event) => {
+						if ((event.target as HTMLElement).closest('[data-tag-filter]')) return;
+						const href = card.getAttribute('data-href');
+						if (href) window.location.href = href;
+					});
+
+					card.addEventListener('keydown', (event) => {
+						if (event.key !== 'Enter' && event.key !== ' ') return;
+						event.preventDefault();
+						const href = card.getAttribute('data-href');
+						if (href) window.location.href = href;
+					});
+				});
+
+				if (activeTag) {
+					setActiveTag(activeTag);
+				}
+			});
+		</script>
+	</body>
+</html>

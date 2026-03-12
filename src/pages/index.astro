@@ -1,0 +1,224 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectImageOne from '../assets/blog-placeholder-1.jpg';
+import ProjectImageTwo from '../assets/blog-placeholder-2.jpg';
+import ProjectImageThree from '../assets/blog-placeholder-3.jpg';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const recentPosts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 4);
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+	</head>
+	<body>
+		<Header />
+		<main>
+			<section class="hero">
+				<h1>Léo Bechet</h1>
+				<p class="tagline">Computational Physics · Scientific Computing · GPU & Neural Network Systems</p>
+				<p>
+					I am a physics and computational science researcher currently pursuing a PhD at Uppsala University,
+					focused on energy-efficient algorithmic solutions for data-intensive applications. This website
+					collects my projects, research notes, and technical blog posts.
+				</p>
+				<p class="links">
+					<a href="https://github.com/lele394">GitHub</a>
+					<a href="mailto:lele.bechet@gmail.com">Email</a>
+					<a href="/resume">Resume</a>
+					<a href="/blog">Blog</a>
+				</p>
+			</section>
+
+			<section id="about" class="section">
+				<h2>Profile</h2>
+				<p>
+					Passionate about astronomy, optics, and computer science, I hold a Master’s degree in
+					Computational Physics and a Bachelor’s degree in Fundamental Physics from the University of
+					Bourgogne Franche-Comté.
+				</p>
+				<p>
+					My research background includes projects at FEMTO-ST and the SYSTEM-7 Lab at the University of
+					Tokyo, with experience in Python, Fortran, C++/CUDA-style acceleration workflows, OpenMP/OpenACC,
+					and neural network training.
+				</p>
+				<p>
+					Languages: French (native), English (C1+), Spanish (A2), Japanese (beginner).
+				</p>
+			</section>
+
+			<section id="projects" class="section">
+				<h2>Projects</h2>
+				<div class="project-grid">
+					<a
+						class="project-tile"
+						href="https://github.com/lele394"
+						target="_blank"
+						rel="noreferrer"
+						style={`background-image: linear-gradient(to top, rgba(15, 17, 21, 0.92), rgba(15, 17, 21, 0.25)), url(${ProjectImageOne.src});`}
+					>
+						<h3>D2Q9 Lattice-Boltzmann (WebGL, MRT)</h3>
+						<p>
+							GPU implementation of a 2D fluid simulation around static objects using WebGL shaders and
+							multi-relaxation-time dynamics.
+						</p>
+					</a>
+					<a
+						class="project-tile"
+						href="https://github.com/lele394"
+						target="_blank"
+						rel="noreferrer"
+						style={`background-image: linear-gradient(to top, rgba(15, 17, 21, 0.92), rgba(15, 17, 21, 0.25)), url(${ProjectImageTwo.src});`}
+					>
+						<h3>N-Body Simulation (Fortran + OpenMP/OpenACC)</h3>
+						<p>
+							GPU/CPU optimized N-body solver with performance comparisons across implementations and
+							accuracy/speedup analysis.
+						</p>
+					</a>
+					<a
+						class="project-tile"
+						href="https://github.com/lele394"
+						target="_blank"
+						rel="noreferrer"
+						style={`background-image: linear-gradient(to top, rgba(15, 17, 21, 0.92), rgba(15, 17, 21, 0.25)), url(${ProjectImageThree.src});`}
+					>
+						<h3>Marching Cubes in the Browser</h3>
+						<p>
+							Real-time 3D JavaScript demo with dynamic camera controls and parallel chunk processing for
+							efficient visualization of implicit surfaces.
+						</p>
+					</a>
+				</div>
+			</section>
+
+			<section class="section">
+				<h2>Recent blog posts</h2>
+				<ul class="recent-posts">
+					{
+						recentPosts.map((post) => (
+							<li>
+								<a class="recent-post-card" href={`/blog/${post.id}/`}>
+									<strong>{post.data.title}</strong>
+									<p>
+										<FormattedDate date={post.data.pubDate} /> · {post.data.description}
+									</p>
+								</a>
+							</li>
+						))
+					}
+				</ul>
+				<p><a href="/blog">Browse all posts →</a></p>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	.hero {
+		display: grid;
+		gap: 0.7rem;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		padding: 1.2rem;
+	}
+	.tagline {
+		color: var(--secondary-text);
+		margin: 0;
+	}
+	.links {
+		display: flex;
+		gap: 0.8rem;
+		flex-wrap: wrap;
+		margin: 0;
+	}
+	.section {
+		margin-top: 2rem;
+	}
+	.project-list,
+	.recent-posts {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 0.75rem;
+	}
+	.project-grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.85rem;
+	}
+	.project-tile {
+		min-height: 230px;
+		padding: 1rem;
+		border: 1px solid var(--border);
+		background-size: cover;
+		background-position: center;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		gap: 0.45rem;
+		color: var(--text);
+		text-decoration: none;
+		transition: box-shadow 0.2s ease, transform 0.2s ease;
+	}
+	.project-tile:hover {
+		box-shadow: 0 0 0 1px var(--accent), 0 0 22px rgba(236, 186, 130, 0.45);
+		transform: translateY(-2px);
+		text-decoration: none;
+	}
+	.project-tile h3 {
+		margin: 0;
+	}
+	.project-tile p {
+		margin: 0;
+		color: var(--text);
+	}
+	.recent-posts li {
+		margin: 0;
+	}
+	.project-tile h3,
+	.recent-posts strong {
+		margin: 0 0 0.35rem;
+	}
+	.recent-post-card {
+		display: block;
+		padding: 0.9rem;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		text-decoration: none;
+		color: var(--text);
+		transition: box-shadow 0.2s ease, transform 0.2s ease;
+	}
+	.recent-post-card:hover {
+		box-shadow: 0 0 0 1px var(--accent), 0 0 22px rgba(236, 186, 130, 0.45);
+		transform: translateY(-1px);
+		text-decoration: none;
+	}
+	.recent-post-card strong {
+		display: block;
+	}
+	.recent-posts p {
+		margin: 0;
+		color: var(--secondary-text);
+	}
+	@media (max-width: 900px) {
+		.project-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+	@media (max-width: 640px) {
+		.project-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>
