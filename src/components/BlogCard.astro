@@ -10,12 +10,13 @@ interface Props {
 }
 
 const { slug, title, description, pubDate, tags } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <article
 	class="post-card"
 	data-post
-	data-href={`/blog/${slug}/`}
+	data-href={`${base}/blog/${slug}/`}
 	data-title={title}
 	data-description={description}
 	data-tags={tags.join(' ').toLowerCase()}
